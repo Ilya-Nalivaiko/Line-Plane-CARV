@@ -1,9 +1,6 @@
 FROM ros:noetic-ros-base-focal
 
-
-
 RUN apt update -y && sudo apt install tmux sudo curl git libcgal-dev libboost-all-dev  libblas-dev liblapack-dev liblapacke-dev  ffmpeg libavcodec-dev libavutil-dev libavformat-dev libswscale-dev  libjpeg-dev libpng-dev libtiff-dev libeigen3-dev libopenexr-dev libopengl-dev libgtk2.0-dev  pkg-config -y
-
 
 RUN git clone https://github.com/FFmpeg/FFmpeg.git && cd FFmpeg && git checkout release/3.4 
 RUN cd FFmpeg && ./configure --disable-x86asm  --enable-shared  && sudo make install -j$nproc
@@ -16,7 +13,30 @@ RUN git clone https://gitlab.com/libeigen/eigen.git
 RUN cd eigen && git checkout 3.1.0 && mkdir build && cd build && cmake .. && sudo make install -j$nproc
 
 
-COPY ./Line-Plane-CARV /Line-Plane-CARV
+# 1. Install dependencies required to build librealsense from source
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    libusb-1.0-0-dev \
+    libssl-dev \
+    pkg-config \
+    libudev-dev
+
+# 2. Clone and Build librealsense WITHOUT network support
+RUN git clone https://github.com/IntelRealSense/librealsense.git && \
+    cd librealsense && \
+    git checkout v2.54.1 && \
+    mkdir build && cd build && \
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_EXAMPLES=OFF \
+        -DBUILD_GRAPHICAL_EXAMPLES=OFF \
+        -DBUILD_NETWORK_DEVICE=OFF \
+    && make -j$(nproc) && make install
+
+
+COPY . /Line-Plane-CARV
 RUN sudo apt upgrade -y 
 RUN apt update -y && sudo apt install ros-noetic-tf ros-noetic-image-transport ros-noetic-cv-bridge -y 
 RUN  cd opencv && git checkout tags/3.2.0 &&  cd build && rm -rf * && cmake .. -DCMAKE_CXX_FLAGS="-fpermissive" && sudo make install -j$nproc
