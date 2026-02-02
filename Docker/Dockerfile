@@ -1,6 +1,6 @@
 FROM ros:noetic-ros-base-focal
 
-RUN apt update -y && sudo apt install tmux sudo curl git libcgal-dev libboost-all-dev  libblas-dev liblapack-dev liblapacke-dev  ffmpeg libavcodec-dev libavutil-dev libavformat-dev libswscale-dev  libjpeg-dev libpng-dev libtiff-dev libeigen3-dev libopenexr-dev libopengl-dev libgtk2.0-dev  pkg-config -y
+RUN apt update -y && sudo apt install tmux sudo curl git libcgal-dev libboost-all-dev  libblas-dev liblapack-dev liblapacke-dev  ffmpeg libavcodec-dev libavutil-dev libavformat-dev libswscale-dev  libjpeg-dev libpng-dev libtiff-dev libeigen3-dev libopenexr-dev libopengl-dev libgtk2.0-dev v4l-utils pkg-config -y
 
 RUN git clone https://github.com/FFmpeg/FFmpeg.git && cd FFmpeg && git checkout release/3.4 
 RUN cd FFmpeg && ./configure --disable-x86asm  --enable-shared  && sudo make install -j$nproc
