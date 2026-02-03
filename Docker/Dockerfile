@@ -1,46 +1,64 @@
 FROM ros:noetic-ros-base-focal
 
-RUN apt update -y && sudo apt install tmux sudo curl git libcgal-dev libboost-all-dev  libblas-dev liblapack-dev liblapacke-dev  ffmpeg libavcodec-dev libavutil-dev libavformat-dev libswscale-dev  libjpeg-dev libpng-dev libtiff-dev libeigen3-dev libopenexr-dev libopengl-dev libgtk2.0-dev v4l-utils pkg-config -y
-
-RUN git clone https://github.com/FFmpeg/FFmpeg.git && cd FFmpeg && git checkout release/3.4 
-RUN cd FFmpeg && ./configure --disable-x86asm  --enable-shared  && sudo make install -j$nproc
-
-RUN git clone https://github.com/opencv/opencv.git && cd opencv && git checkout tags/4.0.0 && mkdir build && cd build &&  cmake .. && sudo make install -j$nproc
-RUN sudo apt update -y && sudo apt install libgl1-mesa-dev libglew-dev  -y 
-RUN git clone https://github.com/stevenlovegrove/Pangolin && cd Pangolin && git checkout tags/v0.5 && mkdir build && cd build && cmake .. && sudo make install -j$nproc
-
-RUN git clone https://gitlab.com/libeigen/eigen.git 
-RUN cd eigen && git checkout 3.1.0 && mkdir build && cd build && cmake .. && sudo make install -j$nproc
-
-
-# 1. Install dependencies required to build librealsense from source
+# 1. Unified System Dependencies
+# We install the system OpenCV, but NOT the system Eigen (since you need 3.1.0 from source)
 RUN apt-get update && apt-get install -y \
-    git \
-    cmake \
-    build-essential \
-    libusb-1.0-0-dev \
-    libssl-dev \
-    pkg-config \
-    libudev-dev
+    tmux sudo curl git cmake build-essential pkg-config v4l-utils \
+    # Vision & Graphics
+    libopencv-dev ffmpeg libavcodec-dev libavutil-dev libavformat-dev libswscale-dev \
+    libjpeg-dev libpng-dev libtiff-dev libopenexr-dev \
+    libgl1-mesa-dev libglew-dev libopengl-dev libgtk2.0-dev \
+    # RealSense & Math Build Deps (Avoid libeigen3-dev here to prevent conflicts)
+    libusb-1.0-0-dev libssl-dev libudev-dev \
+    libcgal-dev libboost-all-dev libblas-dev liblapack-dev \
+    # ROS
+    ros-noetic-tf ros-noetic-image-transport ros-noetic-cv-bridge \
+    ros-noetic-cv-camera \
+    # Debugging
+    libasan6 lsb-release wget software-properties-common gnupg
 
-# 2. Clone and Build librealsense WITHOUT network support
-RUN git clone https://github.com/IntelRealSense/librealsense.git && \
-    cd librealsense && \
-    git checkout v2.54.1 && \
+# more debug
+RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+
+# 2. Build Eigen 3.1.0 from source (As requested)
+RUN git clone https://gitlab.com/libeigen/eigen.git /tmp/eigen && \
+    cd /tmp/eigen && git checkout 3.1.0 && \
+    mkdir build && cd build && cmake .. && make install && \
+    rm -rf /tmp/eigen
+
+# 3. Build Pangolin v0.5
+# Disabling Video (conflicts with FFmpeg 4) and Examples (linker errors with librt)
+RUN git clone https://github.com/stevenlovegrove/Pangolin /tmp/Pangolin && \
+    cd /tmp/Pangolin && git checkout tags/v0.5 && \
+    mkdir build && cd build && \
+    cmake .. \
+        -DBUILD_PANGOLIN_VIDEO=OFF \
+        -DBUILD_EXAMPLES=OFF \
+        -DCMAKE_CXX_FLAGS="-Wno-int-in-bool-context" && \
+    make -j$(nproc) && make install && \
+    rm -rf /tmp/Pangolin
+
+# 4. Build librealsense v2.54.1 (As requested for specific flags)
+RUN git clone https://github.com/IntelRealSense/librealsense.git /tmp/librealsense && \
+    cd /tmp/librealsense && git checkout v2.54.1 && \
     mkdir build && cd build && \
     cmake .. \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_EXAMPLES=OFF \
         -DBUILD_GRAPHICAL_EXAMPLES=OFF \
         -DBUILD_NETWORK_DEVICE=OFF \
-    && make -j$(nproc) && make install
+    && make -j$(nproc) && make install && \
+    rm -rf /tmp/librealsense
 
-
+# 5. Project Setup
 COPY . /Line-Plane-CARV
-RUN sudo apt upgrade -y 
-RUN apt update -y && sudo apt install ros-noetic-tf ros-noetic-image-transport ros-noetic-cv-bridge -y 
-RUN  cd opencv && git checkout tags/3.2.0 &&  cd build && rm -rf * && cmake .. -DCMAKE_CXX_FLAGS="-fpermissive" && sudo make install -j$nproc
+WORKDIR /Line-Plane-CARV
 
-RUN cd /Line-Plane-CARV && chmod +x build.sh && ./build.sh
-RUN cd /Line-Plane-CARV && chmod +x build_ros.sh && /bin/bash -c '. /opt/ros/noetic/setup.bash; export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:/Line-Plane-CARV/Examples/ROS; chmod +x build_ros.sh && ./build_ros.sh' &&     /bin/bash -c '.  Examples/ROS/ORB_SLAM2/build/devel/setup.bash'
+# Ensure the system finds the source-built libs in /usr/local/lib
+RUN ldconfig
 
+# Rebuild project
+RUN chmod +x build.sh && ./build.sh
+RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; \
+    export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:/Line-Plane-CARV/Examples/ROS; \
+    chmod +x build_ros.sh && ./build_ros.sh'

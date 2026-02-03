@@ -4,10 +4,25 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 rosbuild_init()
 
 IF(NOT ROS_BUILD_TYPE)
-  SET(ROS_BUILD_TYPE Release)
+  SET(ROS_BUILD_TYPE Debug)
 ENDIF()
 
 MESSAGE("Build type: " ${ROS_BUILD_TYPE})
+
+
+
+
+# --- Address Sanitizer Configuration ---
+# It is recommended to run ASan in Debug or RelWithDebInfo mode
+set(ASAN_FLAGS "-fsanitize=address -fno-omit-frame-pointer")
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ASAN_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ASAN_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${ASAN_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${ASAN_FLAGS}")
+# ---------------------------------------
+
+
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall  -O3 -march=native ")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall  -O3 -march=native")
@@ -41,7 +56,7 @@ endif()
 message(STATUS "Using opencv version ${OpenCV_VERSION}")
 # Find CGAL
 set(CMAKE_BUILD_TYPE_BACKUP ${CMAKE_BUILD_TYPE})
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 find_package(CGAL REQUIRED COMPONENTS Core)
 include( ${CGAL_USE_FILE} )
 set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE_BACKUP})
