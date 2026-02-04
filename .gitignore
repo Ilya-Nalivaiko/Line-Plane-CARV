@@ -19,7 +19,6 @@ Thirdparty/g2o/config.h
 Thirdparty/g2o/lib/
 Thirdparty/Line3Dpp/build/
 Vocabulary/ORBvoc.txt
-Vocabulary/ORBvoc.bin
 build/
 lib/
 results_line_segments/
