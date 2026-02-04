@@ -316,7 +316,7 @@ void Tracking::Track()
 
     if(mState==NOT_INITIALIZED)
     {
-        std::cout << "a" << std::endl;
+        std::cout << "Not Initialized" << std::endl;
         if(mSensor==System::STEREO || mSensor==System::RGBD)
             StereoInitialization();
         else
