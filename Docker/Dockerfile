@@ -62,3 +62,19 @@ RUN chmod +x build.sh && ./build.sh
 RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; \
     export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:/Line-Plane-CARV/Examples/ROS; \
     chmod +x build_ros.sh && ./build_ros.sh'
+
+
+
+RUN chmod +x /Line-Plane-CARV/core_camera.sh /Line-Plane-CARV/slam_carv.sh
+
+
+# set up VNC server
+ENV X11VNC_P="password"
+RUN apt-get update -y
+RUN apt-get install -y xvfb openbox xterm wget gnupg && \
+    wget https://downloads.sourceforge.net/project/turbovnc/3.1/turbovnc_3.1_amd64.deb && \
+    apt-get install -y ./turbovnc_3.1_amd64.deb && \
+    rm turbovnc_3.1_amd64.deb
+ADD ./Docker/entrypoint.sh /opt/entrypoint.sh
+RUN chmod +x /opt/entrypoint.sh
+ENTRYPOINT /opt/entrypoint.sh

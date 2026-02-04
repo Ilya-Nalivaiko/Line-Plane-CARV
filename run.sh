@@ -14,5 +14,4 @@ docker run \
   --security-opt apparmor=unconfined \
   --device=/dev/video0:/dev/video0 \
   -v /temp/.X11-unix \
-  --network host \
-  -it imjunaida/line_plane_carv-docker:v1.0 /bin/bash
+  -it imjunaida/line_plane_carv-docker:v1.0
