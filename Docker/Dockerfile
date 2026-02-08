@@ -67,6 +67,8 @@ RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; \
 
 RUN chmod +x /Line-Plane-CARV/core_camera.sh /Line-Plane-CARV/slam_carv.sh
 
+# change default location to orbslamcarv
+RUN echo "cd /Line-Plane-CARV" >> /root/.bashrc
 
 # set up VNC server
 ENV X11VNC_P="password"
