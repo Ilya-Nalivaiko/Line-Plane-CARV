@@ -59,9 +59,30 @@ RUN ldconfig
 
 # Rebuild project
 RUN chmod +x build.sh && ./build.sh
-RUN /bin/bash -c '. /opt/ros/noetic/setup.bash; \
-    export ROS_PACKAGE_PATH=${ROS_PACKAGE_PATH}:/Line-Plane-CARV/Examples/ROS; \
-    chmod +x build_ros.sh && ./build_ros.sh'
+# set up ROS for runtime
+RUN printf 'source /opt/ros/noetic/setup.bash\n' >> /root/.bashrc && \
+    printf 'export ROS_PACKAGE_PATH=/Line-Plane-CARV/Examples/ROS:/Line-Plane-CARV/ros_cam_publishers:${ROS_PACKAGE_PATH}\n' >> /root/.bashrc && \
+    # Do it again for the build because sourcing .bashrc doesnt work for whatever reason
+    source /opt/ros/noetic/setup.bash && \
+    export ROS_PACKAGE_PATH=/Line-Plane-CARV/Examples/ROS:/root/orbslam3/SLAM_CARV/ros_cam_publishers:$ROS_PACKAGE_PATH && \
+    # verify packages can be seen
+    rospack profile && \
+    rospack find ORB_CARV_Pub >/dev/null && \
+    rospack find ros_cam_publishers >/dev/null && \
+    # build main package
+    cd /root/orbslam3/SLAM_CARV && \
+    chmod +x build_ros.sh && \
+    ./build_ros.sh && \
+    # Make Python work
+    chmod +x /root/orbslam3/SLAM_CARV/ros_cam_publishers/scripts/mjpeg_camera_node.py && \
+    chmod +x /root/orbslam3/SLAM_CARV/ros_cam_publishers/scripts/mp4_camera_node.py && \
+    chmod +x /root/orbslam3/SLAM_CARV/ros_cam_publishers/scripts/tum_camera_node.py
+
+
+
+
+
+
 
 
 
