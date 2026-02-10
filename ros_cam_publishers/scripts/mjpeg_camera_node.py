@@ -7,7 +7,7 @@ from cv_bridge import CvBridge
 
 def main():
     rospy.init_node("mjpeg_camera_node")
-    pub = rospy.Publisher("/camera/image_raw", Image, queue_size=1)
+    pub = rospy.Publisher("/cv_camera/image_raw", Image, queue_size=1)
     bridge = CvBridge()
 
     # Get the IP parameter, default fallback if not set

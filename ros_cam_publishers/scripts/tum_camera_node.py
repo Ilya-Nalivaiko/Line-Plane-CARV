@@ -38,7 +38,7 @@ def load_from_filenames(directory, pattern):
 
 def main():
     rospy.init_node("image_sequence_camera_node")
-    pub_img  = rospy.Publisher("/camera/image_raw", Image, queue_size=1)
+    pub_img  = rospy.Publisher("/cv_camera/image_raw", Image, queue_size=1)
     pub_info = rospy.Publisher("/camera/camera_info", CameraInfo, queue_size=1, latch=True)
     bridge = CvBridge()
 
